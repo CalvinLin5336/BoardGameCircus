@@ -89,7 +89,7 @@ turing-machine-java/
                     │       ├── RecordDaoImpl.java    -- 實作 JDBC (戰績新增/查詢)，支援 MySQL 與本機記憶體雙重容錯
                     │       ├── UserDaoImpl.java      -- 實作會員 CRUD、快速封鎖、扣款發放、本地富豪統計
                     │       ├── GameConfigDaoImpl.java -- 實作動態讀取/儲存管理員調整的關卡代幣發放規則
-                    │       └── ReportDaoImpl.java    -- 實作全服不重複活躍用戶(DAU)、拿幣率複雜大數據 SQL
+                    │       └── ReportDaoImpl.java    -- 實作全服不重複活躍用戶(DAU)、拿幣率 SQL
                     │
                     ├── service/          # 業務邏輯層
                     │   ├── GameService.java    -- 圖靈解密核心服務介面 (生成、驗證、破譯、紀錄)
@@ -107,17 +107,17 @@ turing-machine-java/
                     ├── util/             # 工具程式
                     │   ├── DbUtil.java           -- MySQL 8.0 驅動載入與 Connection 取得，具備 Offline Mode 自動降級
                     │   ├── PuzzleGenerator.java  -- 核心智慧謎題自動機，負責生成不重複隨機圖靈序號
-                    │   ├── TuringCardRegistry.java-- 全服圖靈卡片註冊表，定義所有核心數學篩選判定電路
-                    │   └── CardAssetManager.java -- 卡片區域坐標管理，精準控制 JToggleButton 覆蓋位置
+                    │   ├── TuringCardRegistry.java-- 全服圖靈卡片註冊表，定義所有核心數學篩選判定
+                    │   └── CardAssetManager.java -- 卡片區域坐標管理，控制 JToggleButton 覆蓋位置
                     │
                     ├── exception/        # 例外處理
                     │   └── GameException.java    -- 自訂執行期例外
                     │
                     └── view/             # 視圖層（Pixel-Perfect Flat UI 極簡扁平化介面組）
-                        ├── LoginFrame.java       -- 高質感系統登入與帳號註冊跳轉視窗
-                        ├── LobbyFrame.java       -- 遊戲大廳主畫面 (圓角卡片排版、剩餘代幣餘額動態更新)
-                        ├── MainFrame.java        -- 核心遊戲操作全螢幕視窗 (內建加減微調 Stepper、90% 劇院高清圖片說明書)
-                        └── AdminConsoleDialog.java-- 核心後台管理彈窗 (支援雙向機動多載建構子、無豆腐塊營運報表)
+                        ├── LoginFrame.java       -- 系統登入與帳號註冊跳轉視窗
+                        ├── LobbyFrame.java       -- 遊戲大廳主畫面
+                        ├── MainFrame.java        -- 核心遊戲操作全螢幕視窗
+                        └── AdminConsoleDialog.java-- 後台管理彈窗
 ```
 
 ------------------------------------------------------------------------
