@@ -1,5 +1,5 @@
 [README.md](https://github.com/user-attachments/files/29735447/README.md)
-# 🧩 圖靈解密 (Turing Machine)
+# 🧩 桌遊馬戲團 (Board Game Circus)
 
 > **A Java Swing implementation inspired by the board game *Turing
 > Machine*, featuring logical deduction gameplay, user management, and
@@ -15,10 +15,9 @@
 
 ## 📖 專案介紹
 
-**圖靈解密（Turing Machine）** 是一款以經典桌遊 **Turing Machine**
-為靈感所開發的 Java Desktop 應用程式。
+**桌遊馬戲團 (Board Game Circus)** 想把經典桌遊開發成 Java Desktop 的應用程式平台。
 
-玩家需要透過驗證卡逐步排除錯誤組合，推理出三位數秘密密碼。
+目前尚只推出**圖靈解密**
 
 ### 功能
 
