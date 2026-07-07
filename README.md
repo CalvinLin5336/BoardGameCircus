@@ -66,7 +66,7 @@
 
 ``` text
 turing-machine-java/
-├── pom.xml                               # Maven 專案設定檔 (升級 JDK 17, MySQL Connector 8.0)
+├── pom.xml                               # Maven 專案設定檔 
 ├── schema.sql                            # MySQL 8.0 資料庫結構與測試資料初始化腳本 (含會員、配置、報表結構)
 └── src/
     └── main/
