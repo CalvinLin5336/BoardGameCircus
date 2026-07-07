@@ -131,28 +131,4 @@ turing-machine-java/
   Maven   3.x
   GUI     Java Swing
 
-------------------------------------------------------------------------
 
-## 🗄️ 建立資料庫
-
-``` sql
-CREATE DATABASE turing_db
-CHARACTER SET utf8mb4
-COLLATE utf8mb4_unicode_ci;
-```
-
-------------------------------------------------------------------------
-
-## ▶️ 執行方式
-
-``` bash
-git clone https://github.com/your-name/TuringMachine.git
-```
-
-完成資料庫設定後執行 `MainFrame.java`。
-
-------------------------------------------------------------------------
-
-## 📄 License
-
-MIT License
