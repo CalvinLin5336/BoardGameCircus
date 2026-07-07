@@ -1,9 +1,7 @@
 [README.md](https://github.com/user-attachments/files/29735447/README.md)
 # 🧩 桌遊馬戲團 (Board Game Circus)
 
-> **A Java Swing implementation inspired by the board game *Turing
-> Machine*, featuring logical deduction gameplay, user management, and
-> administrative analytics.**
+
 
 ![Java](https://img.shields.io/badge/Java-11+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
