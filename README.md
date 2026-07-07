@@ -127,7 +127,7 @@ turing-machine-java/
 
   項目    版本
   ------- ------------
-  Java    17+
+  Java    11+
   MySQL   8.0+
   Maven   3.x
   GUI     Java Swing
