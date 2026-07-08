@@ -7,7 +7,7 @@ import java.sql.Connection;
 import java.util.*;
 
 /**
- * 圖靈密碼遊戲核心產生器 - 終極 CSP 唯一解加密編碼整合版 (智慧難度與張數分離過濾版)
+ * 圖靈密碼遊戲核心產生器 - 終極 CSP 唯一解加密編碼整合版 (智慧難度與張數分離過濾版 + 逆向冗餘防排擠優化)
  */
 public class PuzzleGenerator {
 
@@ -43,7 +43,7 @@ public class PuzzleGenerator {
         
         char[] original = new char[len];
         for (int i = 0; i < len; i++) {
-        	original[i] = shuffledInput.charAt(map[i]);
+            original[i] = shuffledInput.charAt(map[i]);
         }
         return new String(original);
     }
@@ -58,39 +58,37 @@ public class PuzzleGenerator {
         return 4;                                   // #33~#48 地獄大師卡（多判斷、複合連鎖）
     }
 
-    // ==========================================
-    // 🟢 核心方法：隨機產生完美題目 (已完美整合解耦過濾器)
+// ==========================================
+    // 🟢 核心方法：隨機產生完美題目 (外觀權重 + 精確邏輯難度雙重過濾版)
     // ==========================================
     public static PuzzleResult generatePuzzle(
             Connection conn, 
             List<ActiveCondition> allConditions, 
             List<int[]> allCodes, 
-            char difficulty, 
+            char targetDifficulty, // 傳入 'A'(簡單), 'B'(普通), 'C'(困難)
             int cardCount) throws Exception {
 
         Random random = new Random();
         
-        // 1. 根據傳入的難度字元與指定的張數，計算出該關卡應有的「總分數限制區間」與「大師卡上限」
-     // 1. 根據傳入的難度代號 (A, B, C) 與指定的張數，計算出該關卡應有的「總分數限制區間」與「大師卡上限」
+        // 【第一層外觀過濾】設定基本的分數限制區間與大師卡上限
         int minScore = 0;
         int maxScore = 0;
         int maxMasterCards = 0;
 
-        if (difficulty == 'A') { // 🟢 A 代表簡單模式 (原 Easy)
+        if (targetDifficulty == 'A') {
             minScore = 4;
             maxScore = cardCount * 2 - 2; 
-            maxMasterCards = 0; // 絕對不允許出現 #33~#48
-        } else if (difficulty == 'C') { // 🟢 C 代表困難模式 (原 Hard)
+            maxMasterCards = 0; 
+        } else if (targetDifficulty == 'C') {
             minScore = cardCount * 3 - 1; 
             maxScore = cardCount * 4;
-            maxMasterCards = cardCount;   // 允許高比例的大師卡並行聯防
-        } else { // 🟢 預設或傳入 'B' 代表標準普通模式 (原 Standard)
+            maxMasterCards = cardCount;   
+        } else { 
             minScore = cardCount * 2 - 1; 
             maxScore = cardCount * 3 - 2;
-            maxMasterCards = 1; // 最多允許 1 張大師卡點綴
+            maxMasterCards = 1; 
         }
 
-        // 將 183 個子條件依卡片 ID 分組
         Map<Integer, List<ActiveCondition>> cardMap = new HashMap<>();
         for (ActiveCondition cond : allConditions) {
             cardMap.computeIfAbsent(cond.cardId, k -> new ArrayList<>()).add(cond);
@@ -98,11 +96,11 @@ public class PuzzleGenerator {
         List<Integer> availableCardIds = new ArrayList<>(cardMap.keySet());
 
         while (true) {
-            // 🔹 第一步：完全遵守玩家選擇的「卡片張數」，隨機洗牌盲抽指定數量
+            // 🔹 第一步：盲抽玩家指定數量的卡片
             Collections.shuffle(availableCardIds);
             List<Integer> chosenCardIds = new ArrayList<>(availableCardIds.subList(0, cardCount));
             
-            // 🔹 第二步：進行難度指標審查 (Pass 1 - 權重過濾)
+            // 🔹 第二步：外觀難度審查 (Pass 1 - 卡片權重初篩)
             int totalScore = 0;
             int masterCardCount = 0;
             for (int cardId : chosenCardIds) {
@@ -112,21 +110,17 @@ public class PuzzleGenerator {
                 }
             }
 
-            // 如果抽出來的卡片總分或大師卡數量不在該難度的指標區間內，直接拋棄，重新再抽
             if (totalScore < minScore || totalScore > maxScore || masterCardCount > maxMasterCards) {
                 continue;
             }
 
-            // 排序讓編碼更好看
             Collections.sort(chosenCardIds); 
 
-            // 🔹 第三步：隨機抽出本局的正確答案 (神祕密碼)
+            // 🔹 第三步：隨機抽出正確答案並抓取對應子條件
             int ansIndex = random.nextInt(allCodes.size());
             int[] secretAns = allCodes.get(ansIndex); 
 
             List<ActiveCondition> activeConditions = new ArrayList<>();
-            
-            // 找出答案在被選中的卡片中，分別符合哪一個子條件
             for (int cardId : chosenCardIds) {
                 List<ActiveCondition> subs = cardMap.get(cardId);
                 for (ActiveCondition sub : subs) {
@@ -137,40 +131,86 @@ public class PuzzleGenerator {
                 }
             }
 
-            // 4. 資料庫排除表判定
             if (isExcludedByDb(conn, activeConditions)) {
                 continue; 
             }
 
-            // 🔹 第四步：使用 BitSet 進行矩陣交集驗證 (Pass 2 - 唯一解驗證)
+            // 🔹 第四步：使用 BitSet 進行唯一解驗證 (Pass 2)
             BitSet gameIntersect = new BitSet(125);
             gameIntersect.set(0, 125); 
 
             for (int k = 0; k < activeConditions.size(); k++) {
-                ActiveCondition cond = activeConditions.get(k);
-                gameIntersect.and(cond.bitMatrix); 
+                gameIntersect.and(activeConditions.get(k).bitMatrix); 
             }
 
-            // 用純 Java 迴圈數有幾組解，100% 避開 cardinality() 報錯
             int trueCount = 0;
             for (int m = 0; m < 125; m++) {
-                if (gameIntersect.get(m)) {
-                    trueCount++;
-                }
+                if (gameIntersect.get(m)) trueCount++;
             }
 
-            // 嚴格判定：唯一的 1 組解，且卡片張數完全吻合玩家選擇
+            // =================================================================
+            // 🛡️ 第五步：逆向冗餘檢查 兼 精確邏輯難度計算 (Pass 3 & Pass 4)
+            // =================================================================
             if (trueCount == 1 && activeConditions.size() == cardCount) {
-                PuzzleResult result = new PuzzleResult();
-                result.blueAns = secretAns[0];
-                result.yellowAns = secretAns[1];
-                result.purpleAns = secretAns[2];
-                result.cardIds = chosenCardIds;
-                result.activeConditions = activeConditions;
                 
-                // 呼叫序號生成器
-                result.puzzleCode = buildPuzzleCode(difficulty, cardCount, activeConditions);
-                return result;
+                boolean isEveryCardEssential = true;
+                int totalInterference = 0; // 統計少了單張卡後，多出來的「干擾解總數」
+                
+                for (int i = 0; i < cardCount; i++) {
+                    BitSet testIntersect = new BitSet(125);
+                    testIntersect.set(0, 125); 
+                    
+                    for (int j = 0; j < cardCount; j++) {
+                        if (i == j) continue; 
+                        testIntersect.and(activeConditions.get(j).bitMatrix);
+                    }
+                    
+                    int testTrueCount = 0;
+                    for (int m = 0; m < 125; m++) {
+                        if (testIntersect.get(m)) testTrueCount++;
+                    }
+                    
+                    // 🚨 抓到冗餘卡，直接淘汰
+                    if (testTrueCount == 1) {
+                        isEveryCardEssential = false;
+                        break; 
+                    }
+                    
+                    // 📈 精確累加：這張卡被拿掉後多出來的錯誤答案數量（減掉唯一解本身）
+                    totalInterference += (testTrueCount - 1);
+                }
+                
+                // 冗餘檢查失敗，直接重抽選
+                if (!isEveryCardEssential) {
+                    continue;
+                }
+
+                // 🧮 計算不含張數權重的「純邏輯平均干擾係數」
+                double avgInterference = (double) totalInterference / cardCount;
+                
+                // 精確判定這道題目的實際推理難度
+                char actualLogicDifficulty;
+                if (avgInterference <= 1.5) {
+                    actualLogicDifficulty = 'A'; // 簡單：拿掉任何卡都只多1~2個錯字，線索非常獨立直覺
+                } else if (avgInterference <= 4.0) {
+                    actualLogicDifficulty = 'B'; // 普通：線索間有一定交織，拿掉一張會多出不少干擾
+                } else {
+                    actualLogicDifficulty = 'C'; // 困難：環環相扣，漏掉任何一張，解空間會大爆炸
+                }
+
+                // 🏆 最終核心審查：只有外觀權重、唯一解、無冗餘、且【精確邏輯難度】完全吻合玩家選擇時，才正式出題！
+                if (actualLogicDifficulty == targetDifficulty) {
+                    PuzzleResult result = new PuzzleResult();
+                    result.blueAns = secretAns[0];
+                    result.yellowAns = secretAns[1];
+                    result.purpleAns = secretAns[2];
+                    result.cardIds = chosenCardIds;
+                    result.activeConditions = activeConditions;
+                    
+                    // 呼叫序號生成器
+                    result.puzzleCode = buildPuzzleCode(targetDifficulty, cardCount, activeConditions);
+                    return result;
+                }
             }
         }
     }
