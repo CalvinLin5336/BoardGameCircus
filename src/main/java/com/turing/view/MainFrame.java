@@ -714,9 +714,13 @@ public class MainFrame extends JFrame {
         }
     }
     
-    private void disablePanelButtons(JPanel panel, boolean active) {
+private void disablePanelButtons(JPanel panel, boolean active) {
         for (Component comp : panel.getComponents()) {
             if (comp instanceof JButton) {
+                // 🟢 核心修正：如果抓到的按鈕是「進入下一輪」，絕對不可以把它關掉！
+                if (comp == btnNextRound) {
+                    continue; 
+                }
                 comp.setEnabled(active);
             } else if (comp instanceof JPanel) {
                 disablePanelButtons((JPanel)comp, active);
